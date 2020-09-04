@@ -19,7 +19,7 @@ body {
 }
 .my-info .my-peer-id {
   padding: 10px;
-  color: blue;
+  color: #0753f7;
 }
 .peers-container {
   display: flex;
@@ -56,8 +56,8 @@ body {
   margin-bottom: 5px;
 }
 .connect-button.connected {
-  border: 1px solid #be00c1;
-  color: #be00c1;
+  border: 1px solid #0753f7;
+  color: #0753f7;
 }
 .videos-container {
   display: flex;
@@ -93,7 +93,7 @@ body {
   align-items: center;
   justify-content: space-around;
   height: 30px;
-  color: #be00c1;
+  color: #0753f7;
 }
 .video-container.them .video-chat-controls {
   display: none;
@@ -105,7 +105,7 @@ body {
   display: block;
 }
 .video-container.them .name {
-  color: #be00c1;
+  color: #0753f7;
 }
 .video-container.me {
   flex: 0 0 30%;
@@ -123,11 +123,11 @@ body {
   overflow: hidden;
   grid-row: 3 / 4;
   grid-column: 2 / 3;
-  background-color: lightgray;
+  background-color: #a4bdf3;
   padding: 10px;
 }
 .messages {
-  background-color: #eee;
+  background-color: #ffffff;
   margin-bottom: 10px;
   padding: 10px;
   overflow: scroll;
@@ -144,10 +144,10 @@ body {
 .message.me {
   display: flex;
   justify-content: flex-end;
-  color: blue;
+  color: #000000;
 }
 .message.them {
-  color: #be00c1;
+  color: #000000;
 }
 .message-input {
   display: flex;
