@@ -2,6 +2,7 @@
 (function () {
   let peer = null;
   let conn = null;
+  let mediaConn = null;
 
   //Peer open
   const peerOnOpen = (id) => {
@@ -24,15 +25,25 @@
       printMessage(data, "them");
     });
 
-    /*conn.on("data", (data) => printMessage(data, "them"));
-    }); */
-
     //Peer changed
     const event = new CustomEvent("peer-changed", {
       detail: { peerId: conn.peer },
     });
 
     document.dispatchEvent(event);
+  };
+
+  // On peer event: call, when they are calling you.
+  const peerOnCall = (incomingCall) => {
+    mediaConn && mediaConn.close();
+    //Awnser incoming call
+    navigator.mediaDevices
+      .getUserMedia({ audio: false, video: true })
+      .then((myStream) => {
+        mediaConn = incomingCall;
+        incomingCall.answer(myStream);
+        mediaConn.on("stream", mediaConnOnStream);
+      });
   };
 
   //Connect to peer
@@ -75,6 +86,7 @@
     msgsWrapperDiv.classList.add(user);
     msgsWrapperDiv.appendChild(newMsgDiv);
     msgDiv.appendChild(msgsWrapperDiv);
+    msgDiv.scrollTo(0, msgDiv.scrollHeight);
   };
 
   //Connect to peer server
@@ -83,7 +95,7 @@
     port: 8443,
     path: "/myapp",
     secure: true,
-    config: {
+    /* config: {
       iceServers: [
         { url: ["stun:eu-turn7.xirsys.com"] },
         {
@@ -93,14 +105,31 @@
           url: "turn:eu-turn7.xirsys.com:80?transport=udp",
         },
       ],
-    },
+    },*/
   });
 
   //Handle peer
   peer.on("open", peerOnOpen);
   peer.on("error", peerOnError);
   peer.on("connection", peerOnConnection);
+  peer.on("call", peerOnCall);
 
+  // Display video of me
+  navigator.mediaDevices
+    .getUserMedia({ audio: false, video: true })
+    .then((stream) => {
+      const video = document.querySelector(".video-container.me video");
+      video.muted = true;
+      video.srcObject = stream;
+    });
+
+  const mediaConnOnStream = (theirStream) => {
+    const video = document.querySelector(".video-container.them video");
+    video.muted = true;
+    video.srcObject = theirStream;
+  };
+
+  //List all peers
   document
     .querySelector(".list-all-peers-button")
     .addEventListener("click", () => {
@@ -138,17 +167,60 @@
     });
 
     let button = document.querySelector(`.peerId-${peerId}`);
-    button.classList.add("connected");
+    button && button.classList.add("connected");
+
+    //Update video subtext
+    const video = document.querySelector(".video-container.them");
+    video.querySelector(".name").innerHTML = peerId;
+    video.classList.add("connected");
+    video.querySelector(".stop").classList.remove("active");
+    video.querySelector(".start").classList.add("active");
   });
 
   // Send Message
   const sendMessage = (message) => {
     let newMessage = document.querySelector(".new-message").value;
     conn.send(newMessage);
+
     // Print Message
     printMessage(newMessage, "me");
+    document.querySelector(".new-message").value = "";
   };
 
+  // Start video btn
+  const startVideoCallClick = () => {
+    const video = document.querySelector(".video-container.them");
+    const startBtn = video.querySelector(".start");
+    const stopBtn = video.querySelector(".stop");
+    startBtn.classList.remove("active");
+    stopBtn.classList.add("active");
+
+    navigator.mediaDevices
+      .getUserMedia({ audio: false, video: true })
+      .then((myStream) => {
+        mediaConn && mediaConn.close();
+        mediaConn = peer.call(conn.peer, myStream);
+        mediaConn.on("stream", mediaConnOnStream);
+      });
+  };
+  document
+    .querySelector(".video-container.them .start")
+    .addEventListener("click", startVideoCallClick);
+
+  //Stop video btn
+  const stopVideoCallClick = () => {
+    mediaConn = peer.call(conn.peer, myStream);
+    const video = document.querySelector(".video-container.them");
+    const startBtn = video.querySelector(".start");
+    const stopBtn = video.querySelector(".stop");
+    stopBtn.classList.remove("active");
+    startBtn.classList.add("active");
+  };
+  document
+    .querySelector(".video-container.them .stop")
+    .addEventListener("click", stopVideoCallClick);
+
+  //Press enter to send
   document
     .querySelector(".send-new-message-button")
     .addEventListener("click", sendMessage);
